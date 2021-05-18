@@ -1,0 +1,76 @@
+
+service: hsbc-api
+
+custom:
+  settings:
+    THANK_YOU_NOTES_TABLE_HSBC : thankYouNotesHSBC
+provider:
+  name: aws
+  runtime: nodejs12.x
+  environment: ${self:custom.settings}
+  region: ap-south-1
+  iamRoleStatements: 
+  - Effect: "Allow"
+    Action:
+     - dynamodb:DescribeTable
+     - dynamodb:Scan
+     - dynamodb:GetItem
+     - dynamodb:PutItem
+     - dynamodb:UpdateItem
+     - dynamodb:DeleteItem
+    Resource:
+     - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.settings.THANK_YOU_NOTES_TABLE_HSBC}"
+
+functions:
+  createNote:
+    handler: handler.createNote
+    events:
+    - http:
+        path: /note
+        method: post
+  getAllNotes:
+    handler: handler.getAllNotes
+    events:
+    - http:
+        path: /notes
+        method: get
+  getNotes:
+    handler: handler.getNotes
+    events:
+    - http:
+        path: /notes/{number}
+        method: get
+  getNote:
+    handler: handler.getNote
+    events:
+    - http:
+        path: /note/{id}
+        method: get
+  updateNote:
+    handler: handler.updateNote
+    events:
+    - http:
+        path: /note/{id}
+        method: put
+  deleteNote:
+    handler: handler.deleteNote
+    events:
+    - http:
+        path: /post/{id}
+        method: delete
+
+resources:
+  Resources:
+    ThankYouTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+        - AttributeName: "id"
+          AttributeType: "S"
+        KeySchema:
+        - AttributeName: "id"
+          KeyType: "HASH"
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:custom.settings.THANK_YOU_NOTES_TABLE_HSBC}     
